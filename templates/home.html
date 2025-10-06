@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Detector - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Waste Detector</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container upload-section">
+            <h2>Upload a Photo to Detect Waste</h2>
+            <p>Our AI model will analyze the image and identify different types of waste.</p>
+            <form id="upload-form" action="#" method="post" enctype="multipart/form-data">
+                <input type="file" id="photo-upload" name="photo" accept="image/*" required>
+                <label for="photo-upload" class="upload-button">Choose File</label>
+                <span id="file-name">No file chosen</span>
+                <button type="submit" class="detect-button">Detect Waste</button>
+            </form>
+            <div id="result-area">
+                </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Waste Detector. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
