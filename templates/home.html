@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waste Detector - Home</title>
+    <title>♻️ Smart Waste Sorting - AI-Powered Classification</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>Waste Detector</h1>
+            <div class="logo">
+                <span class="logo-icon">♻️</span>
+                <h1>Smart Waste Sorting</h1>
+            </div>
             <nav>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="/">Home</a></li>
                     <li><a href="#">About</a></li>
                     <li><a href="#">Contact</a></li>
                 </ul>
@@ -21,24 +25,230 @@
     </header>
 
     <main>
-        <div class="container upload-section">
-            <h2>Upload a Photo to Detect Waste</h2>
-            <p>Our AI model will analyze the image and identify different types of waste.</p>
-            <form id="upload-form" action="#" method="post" enctype="multipart/form-data">
-                <input type="file" id="photo-upload" name="photo" accept="image/*" required>
-                <label for="photo-upload" class="upload-button">Choose File</label>
-                <span id="file-name">No file chosen</span>
-                <button type="submit" class="detect-button">Detect Waste</button>
-            </form>
-            <div id="result-area">
+        <div class="hero-section">
+            <div class="container">
+                <h2 class="hero-title">AI-Powered Waste Classification</h2>
+                <p class="hero-subtitle">Upload an image and let our advanced AI model identify the type of waste instantly</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="upload-section">
+                <div class="upload-card">
+                    <div class="upload-icon">📸</div>
+                    <h3>Upload Waste Image</h3>
+                    <p class="upload-description">Supports glass, paper, cardboard, plastic, metal, and trash</p>
+                    
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="photo-upload" name="photo" accept="image/*" required>
+                            <label for="photo-upload" class="upload-button">
+                                <span class="upload-icon-btn">📁</span>
+                                <span>Choose Image</span>
+                            </label>
+                            <span id="file-name" class="file-name">No file selected</span>
+                        </div>
+                        
+                        <div id="image-preview-container" class="image-preview-container">
+                            <div class="preview-wrapper">
+                                <img id="image-preview" src="" alt="Preview">
+                                <button type="button" class="remove-image" id="remove-image">×</button>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="detect-button" id="detect-btn">
+                            <span class="button-icon">🔍</span>
+                            <span>Analyze Waste</span>
+                        </button>
+                    </form>
+                    
+                    <div id="loading" class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Analyzing image with AI...</p>
+                    </div>
                 </div>
+                
+                <div id="result-area"></div>
+            </div>
         </div>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Waste Detector. All rights reserved.</p>
+            <p>&copy; 2025 Smart Waste Sorting. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('photo-upload');
+        const fileName = document.getElementById('file-name');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const resultArea = document.getElementById('result-area');
+        const loading = document.getElementById('loading');
+        const detectBtn = document.getElementById('detect-btn');
+
+        // Update file name when file is selected
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = file.name;
+                
+                // Show image preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+                
+                // Clear previous results
+                resultArea.innerHTML = '';
+            } else {
+                fileName.textContent = 'No file selected';
+                imagePreviewContainer.style.display = 'none';
+            }
+        });
+
+        // Remove image functionality
+        const removeImageBtn = document.getElementById('remove-image');
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileName.textContent = 'No file selected';
+                imagePreviewContainer.style.display = 'none';
+                resultArea.innerHTML = '';
+            });
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('photo', file);
+            
+            // Show loading state
+            loading.style.display = 'block';
+            detectBtn.disabled = true;
+            resultArea.innerHTML = '';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading state
+                loading.style.display = 'none';
+                detectBtn.disabled = false;
+                
+                if (data.error) {
+                    resultArea.innerHTML = `
+                        <div class="result-error">
+                            <h3>Error</h3>
+                            <p>${data.error}</p>
+                        </div>
+                    `;
+                } else if (data.success && data.prediction) {
+                    const pred = data.prediction;
+                    const classColors = {
+                        'glass': '#3b82f6',
+                        'paper': '#f59e0b',
+                        'cardboard': '#f97316',
+                        'plastic': '#ef4444',
+                        'metal': '#64748b',
+                        'trash': '#475569'
+                    };
+                    const color = classColors[pred.class.toLowerCase()] || '#3498db';
+                    
+                    // Create result HTML with beautiful design
+                    const classIcons = {
+                        'glass': '🍾',
+                        'paper': '📄',
+                        'cardboard': '📦',
+                        'plastic': '🫙',
+                        'metal': '🪙',
+                        'trash': '🗑️'
+                    };
+                    const icon = classIcons[pred.class.toLowerCase()] || '📦';
+                    
+                    let resultHTML = `
+                        <div class="result-success">
+                            <div class="result-header">
+                                <span class="result-icon">✅</span>
+                                <h3>Classification Result</h3>
+                            </div>
+                            <div class="prediction-main">
+                                <div class="predicted-class" style="border-left: 4px solid ${color}; background: linear-gradient(135deg, ${color}15 0%, ${color}05 100%);">
+                                    <div class="class-icon-large">${icon}</div>
+                                    <h2 style="color: ${color};">${pred.class.charAt(0).toUpperCase() + pred.class.slice(1)}</h2>
+                                    <div class="confidence-badge">
+                                        <span class="confidence-label">Confidence</span>
+                                        <span class="confidence-value">${pred.confidence}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="all-probabilities">
+                                <h4>
+                                    <span class="prob-icon">📊</span>
+                                    Probability Distribution
+                                </h4>
+                                <div class="probability-bars">
+                    `;
+                    
+                    // Sort probabilities
+                    const sortedProbs = Object.entries(pred.all_probabilities)
+                        .sort((a, b) => b[1] - a[1]);
+                    
+                    sortedProbs.forEach(([className, prob]) => {
+                        const probPercent = (prob * 100).toFixed(2);
+                        const barColor = classColors[className.toLowerCase()] || '#3498db';
+                        const classIcon = classIcons[className.toLowerCase()] || '📦';
+                        resultHTML += `
+                            <div class="probability-item">
+                                <div class="probability-label">
+                                    <span class="prob-class-name">
+                                        <span class="prob-icon-small">${classIcon}</span>
+                                        ${className.charAt(0).toUpperCase() + className.slice(1)}
+                                    </span>
+                                    <span class="prob-percentage">${probPercent}%</span>
+                                </div>
+                                <div class="probability-bar-container">
+                                    <div class="probability-bar" style="width: ${probPercent}%; background: linear-gradient(90deg, ${barColor}, ${barColor}dd);"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    resultHTML += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    resultArea.innerHTML = resultHTML;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                detectBtn.disabled = false;
+                resultArea.innerHTML = `
+                    <div class="result-error">
+                        <h3>Error</h3>
+                        <p>An error occurred: ${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
 </body>
 </html>
